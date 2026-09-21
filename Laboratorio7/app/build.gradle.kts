@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization") version "2.0.0"
 }
 
 android {
@@ -51,4 +52,12 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    // Navegación en Compose
+    implementation("androidx.navigation:navigation-compose:2.10.1")
+    // Serialización de Kotlin
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+    // Coil para cargar imágenes desde internet
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    // Íconos extendidos de Material
+    implementation("androidx.compose.material:material-icons-extended")
 }
