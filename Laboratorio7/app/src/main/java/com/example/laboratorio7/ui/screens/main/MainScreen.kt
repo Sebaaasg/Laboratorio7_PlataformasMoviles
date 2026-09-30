@@ -1,71 +1,118 @@
 package com.example.laboratorio7.ui.screens.main
 
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Public
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.navigation
+import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.example.laboratorio7.navigation.*
-import com.example.laboratorio7.ui.screens.locations.LocationDetailsScreen
+import com.example.laboratorio7.navigation.CharacterDetailDestination
+import com.example.laboratorio7.navigation.CharactersDestination
+import com.example.laboratorio7.navigation.CharactersGraph
+import com.example.laboratorio7.navigation.LocationDetailDestination
+import com.example.laboratorio7.navigation.LocationsDestination
+import com.example.laboratorio7.navigation.LocationsGraph
+import com.example.laboratorio7.navigation.ProfileDestination
+import com.example.laboratorio7.ui.screens.characterdetail.CharacterDetailScreen
+import com.example.laboratorio7.ui.screens.characters.CharactersScreen
+import com.example.laboratorio7.ui.screens.locationdetails.LocationDetailsScreen
 import com.example.laboratorio7.ui.screens.locations.LocationsScreen
 import com.example.laboratorio7.ui.screens.profile.ProfileScreen
-import androidx.navigation.NavDestination.Companion.hasRoute
+
+// Cada opción del BottomNavigation: texto, ícono y a dónde lleva
+private data class BottomNavItem(
+    val label: String,
+    val icon: ImageVector,
+    val destination: Any
+)
+
+private val bottomNavItems = listOf(
+    BottomNavItem("Characters", Icons.Filled.People, CharactersGraph),
+    BottomNavItem("Locations", Icons.Filled.Public, LocationsGraph),
+    BottomNavItem("Profile", Icons.Filled.Person, ProfileDestination)
+)
 
 @Composable
 fun MainScreen(onLogout: () -> Unit) {
-    val bottomNavController = rememberNavController()
+    // NavController propio para las pestañas, separado del de Login/Main
+    val navController = rememberNavController()
 
     Scaffold(
-        bottomBar = {
-            BottomNavigationBar(navController = bottomNavController)
-        }
-    ) { paddingValues ->
-        // Este NavHost maneja únicamente la navegación de las 3 opciones inferiores
+        bottomBar = { BottomNavigationBar(navController = navController) }
+    ) { innerPadding ->
         NavHost(
-            navController = bottomNavController,
+            navController = navController,
             startDestination = CharactersGraph,
-            modifier = Modifier.padding(paddingValues)
+            // consumeWindowInsets evita que los TopAppBar de cada pantalla
+            // vuelvan a sumar el espacio de la barra de estado
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
         ) {
 
-            // 1. Nested Graph de Characters (Lab 7)
-            navigation<CharactersGraph>(startDestination = CharactersListRoute) {
-                composable<CharactersListRoute> {
-                    // Aquí mandas a llamar al composable de Characters que ya tenías en el Lab 7
-                    // CharactersScreen(...)
-                    Text("Vista de Characters de Lab 7") // Placeholder
-                }
-            }
-
-            // 2. Nested Graph de Locations
-            navigation<LocationsGraph>(startDestination = LocationsListRoute) {
-                composable<LocationsListRoute> {
-                    LocationsScreen(
-                        onLocationClick = { locationId ->
-                            bottomNavController.navigate(LocationDetailsRoute(id = locationId))
+            // Nested graph de Characters: lista y detalle del Lab 7
+            navigation<CharactersGraph>(startDestination = CharactersDestination) {
+                composable<CharactersDestination> {
+                    CharactersScreen(
+                        onCharacterClick = { id ->
+                            navController.navigate(CharacterDetailDestination(characterId = id))
                         }
                     )
                 }
 
-                composable<LocationDetailsRoute> { backStackEntry ->
-                    // Extraemos el parámetro ID de manera segura usando toRoute()
-                    val detailsRoute = backStackEntry.toRoute<LocationDetailsRoute>()
-                    LocationDetailsScreen(
-                        locationId = detailsRoute.id,
-                        onBackClick = { bottomNavController.popBackStack() }
+                composable<CharacterDetailDestination> { backStackEntry ->
+                    val route = backStackEntry.toRoute<CharacterDetailDestination>()
+                    CharacterDetailScreen(
+                        characterId = route.characterId,
+                        onBackClick = { navController.popBackStack() }
                     )
                 }
             }
 
-            // 3. Ventana individual de Perfil
-            composable<ProfileRoute> {
+            // Nested graph de Locations: lista y detalle
+            navigation<LocationsGraph>(startDestination = LocationsDestination) {
+                composable<LocationsDestination> {
+                    LocationsScreen(
+                        onLocationClick = { id ->
+                            // Solo se manda el ID a la pantalla de detalle
+                            navController.navigate(LocationDetailDestination(locationId = id))
+                        }
+                    )
+                }
+
+                composable<LocationDetailDestination> { backStackEntry ->
+                    val route = backStackEntry.toRoute<LocationDetailDestination>()
+                    LocationDetailsScreen(
+                        locationId = route.locationId,
+                        onBackClick = { navController.popBackStack() }
+                    )
+                }
+            }
+
+            // Profile es una sola pantalla, no necesita nested graph
+            composable<ProfileDestination> {
                 ProfileScreen(onLogoutClick = onLogout)
             }
         }
@@ -73,54 +120,48 @@ fun MainScreen(onLogout: () -> Unit) {
 }
 
 @Composable
-fun BottomNavigationBar(navController: NavHostController) {
-    NavigationBar {
-        val navBackStackEntry by navController.currentBackStackEntryAsState()
-        val currentDestination = navBackStackEntry?.destination
+private fun BottomNavigationBar(navController: NavHostController) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentDestination = navBackStackEntry?.destination
 
-        // Item: Characters
-        val isCharactersSelected = currentDestination?.hierarchy?.any { it.hasRoute(CharactersGraph::class) } == true
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.Person, contentDescription = "Characters") },
-            label = { Text("Characters") },
-            selected = isCharactersSelected,
-            onClick = {
-                navController.navigate(CharactersGraph) {
-                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            }
-        )
+    NavigationBar(containerColor = MaterialTheme.colorScheme.primary) {
+        bottomNavItems.forEach { item ->
+            // hierarchy incluye la pantalla actual y los grafos que la contienen,
+            // así "Locations" sigue marcado aunque estemos en el detalle
+            val selected = currentDestination?.hierarchy?.any {
+                it.hasRoute(item.destination::class)
+            } == true
 
-        // Item: Locations
-        val isLocationsSelected = currentDestination?.hierarchy?.any { it.hasRoute(LocationsGraph::class) } == true
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.LocationOn, contentDescription = "Locations") },
-            label = { Text("Locations") },
-            selected = isLocationsSelected,
-            onClick = {
-                navController.navigate(LocationsGraph) {
-                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            }
-        )
-
-        // Item: Profile
-        val isProfileSelected = currentDestination?.hierarchy?.any { it.hasRoute(ProfileRoute::class) } == true
-        NavigationBarItem(
-            icon = { Icon(Icons.Default.AccountCircle, contentDescription = "Profile") },
-            label = { Text("Profile") },
-            selected = isProfileSelected,
-            onClick = {
-                navController.navigate(ProfileRoute) {
-                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                    launchSingleTop = true
-                    restoreState = true
-                }
-            }
-        )
+            NavigationBarItem(
+                selected = selected,
+                onClick = {
+                    navController.navigate(item.destination) {
+                        // Regresa al inicio del grafo para no ir apilando pestañas,
+                        // pero guarda el estado de la pestaña que se deja
+                        popUpTo(navController.graph.findStartDestination().id) {
+                            saveState = true
+                        }
+                        // No crea otra copia si ya estamos en esa pestaña
+                        launchSingleTop = true
+                        // Al volver a una pestaña, recupera donde se había quedado
+                        restoreState = true
+                    }
+                },
+                icon = { Icon(item.icon, contentDescription = item.label) },
+                label = {
+                    Text(
+                        text = item.label,
+                        fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                    )
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                    selectedTextColor = MaterialTheme.colorScheme.onPrimary,
+                    indicatorColor = MaterialTheme.colorScheme.secondary,
+                    unselectedIconColor = MaterialTheme.colorScheme.onPrimary,
+                    unselectedTextColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
     }
 }

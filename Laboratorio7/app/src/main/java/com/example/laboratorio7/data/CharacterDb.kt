@@ -1,4 +1,4 @@
-package com.example.laboratorio7
+package com.example.laboratorio7.data
 
 class CharacterDb {
     private val characters: List<Character> = listOf(

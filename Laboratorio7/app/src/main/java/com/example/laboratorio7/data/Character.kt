@@ -1,4 +1,4 @@
-package com.example.laboratorio7
+package com.example.laboratorio7.data
 
 data class Character(
     val id: Int,

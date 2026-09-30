@@ -2,31 +2,35 @@ package com.example.laboratorio7.navigation
 
 import kotlinx.serialization.Serializable
 
-//  Rutas Raíz
+// ---------- Grafo raíz ----------
 @Serializable
-object LoginRoute
+object LoginDestination
 
+// Pantalla principal que contiene el BottomNavigation
 @Serializable
-object MainRoute // La vista que contendrá el BottomNavigation
+object MainDestination
 
-// --- Nested Graph para Characters ---
+// ---------- Nested graph de Characters ----------
 @Serializable
 object CharactersGraph
 
 @Serializable
-object CharactersListRoute // Pantalla de lista de personajes
+object CharactersDestination
 
-// --- Nested Graph para Locations ---
+@Serializable
+data class CharacterDetailDestination(val characterId: Int)
+
+// ---------- Nested graph de Locations ----------
 @Serializable
 object LocationsGraph
 
 @Serializable
-object LocationsListRoute // Pantalla de lista de locaciones
+object LocationsDestination
 
-// se pasa únicamente el ID como parámetro
+// Solo viaja el ID, la pantalla de detalle busca lo demás en LocationDb
 @Serializable
-data class LocationDetailsRoute(val id: Int)
+data class LocationDetailDestination(val locationId: Int)
 
-// --- Perfil ---
+// ---------- Profile (no necesita grafo propio, es una sola pantalla) ----------
 @Serializable
-object ProfileRoute
+object ProfileDestination

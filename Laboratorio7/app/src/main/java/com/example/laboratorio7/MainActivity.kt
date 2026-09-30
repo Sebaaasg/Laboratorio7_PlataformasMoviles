@@ -3,64 +3,58 @@ package com.example.laboratorio7
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.ui.Modifier
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.laboratorio7.navigation.LoginRoute
-import com.example.laboratorio7.navigation.MainRoute
+import com.example.laboratorio7.navigation.LoginDestination
+import com.example.laboratorio7.navigation.MainDestination
+import com.example.laboratorio7.ui.screens.login.LoginScreen
 import com.example.laboratorio7.ui.screens.main.MainScreen
 import com.example.laboratorio7.ui.theme.Laboratorio7Theme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             Laboratorio7Theme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    val rootNavController = rememberNavController()
+                AppNavigation()
+            }
+        }
+    }
+}
 
-                    // Este es el NavHost Raíz. Administra Login vs Pantalla Principal.
-                    NavHost(
-                        navController = rootNavController,
-                        startDestination = LoginRoute
-                    ) {
+// Grafo raíz: solo decide si se muestra el Login o la parte principal de la app
+@Composable
+fun AppNavigation() {
+    val navController = rememberNavController()
 
-                        // Vista de Login
-                        composable<LoginRoute> {
-                            Button(onClick = {
-                                // Al iniciar sesión, navegamos a MainRoute y destruimos LoginRoute
-                                rootNavController.navigate(MainRoute) {
-                                    popUpTo(LoginRoute) { inclusive = true }
-                                }
-                            }) {
-                                Text("Iniciar Sesión (Simulado)")
-                            }
-                        }
+    NavHost(navController = navController, startDestination = LoginDestination) {
 
-                        // Pantalla principal que tiene el BottomNavigation
-                        composable<MainRoute> {
-                            MainScreen(
-                                onLogout = {
-                                    // REQUISITO: Al cerrar sesión, limpiar TODO el backstack
-                                    rootNavController.navigate(LoginRoute) {
-                                        // popUpTo(0) limpia completamente el historial
-                                        popUpTo(0) { inclusive = true }
-                                    }
-                                }
-                            )
-                        }
+        composable<LoginDestination> {
+            LoginScreen(
+                onLoginClick = {
+                    navController.navigate(MainDestination) {
+                        // Se quita el Login del backstack para que "atrás" no regrese a él
+                        popUpTo<LoginDestination> { inclusive = true }
                     }
                 }
-            }
+            )
+        }
+
+        composable<MainDestination> {
+            MainScreen(
+                onLogout = {
+                    navController.navigate(LoginDestination) {
+                        // graph.id es la raíz del grafo, entonces con inclusive = true
+                        // se saca todo lo que había en el backstack y el Login queda solo.
+                        // Si el usuario presiona "atrás" desde ahí, la app se cierra.
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }
