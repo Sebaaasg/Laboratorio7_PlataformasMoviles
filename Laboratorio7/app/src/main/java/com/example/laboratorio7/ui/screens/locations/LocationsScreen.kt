@@ -14,18 +14,23 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.laboratorio7.data.Location
-import com.example.laboratorio7.data.LocationDb
+import com.example.laboratorio7.ui.components.ErrorLayout
+import com.example.laboratorio7.ui.components.LoadingLayout
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LocationsScreen(onLocationClick: (Int) -> Unit) {
-    // Igual que en Characters, la lista se obtiene una sola vez
-    val locations = remember { LocationDb().getAllLocations() }
+fun LocationsScreen(
+    onLocationClick: (Int) -> Unit,
+    viewModel: LocationsViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -38,14 +43,27 @@ fun LocationsScreen(onLocationClick: (Int) -> Unit) {
             )
         }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-        ) {
-            items(locations) { location ->
-                // Al hacer click solo se manda el ID hacia arriba
-                LocationListItem(location = location, onClick = { onLocationClick(location.id) })
+        val contentModifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+
+        when {
+            uiState.isLoading -> LoadingLayout(
+                onClick = { viewModel.onLoadingClick() },
+                modifier = contentModifier
+            )
+
+            uiState.hasError -> ErrorLayout(
+                message = "Error al obtener listado de ubicaciones.",
+                onRetryClick = { viewModel.getLocations() },
+                modifier = contentModifier
+            )
+
+            else -> LazyColumn(modifier = contentModifier) {
+                items(uiState.data) { location ->
+                    // Al hacer click solo se manda el ID hacia arriba
+                    LocationListItem(location = location, onClick = { onLocationClick(location.id) })
+                }
             }
         }
     }

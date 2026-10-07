@@ -19,17 +19,23 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.example.laboratorio7.data.LocationDb
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.laboratorio7.data.Location
+import com.example.laboratorio7.ui.components.ErrorLayout
+import com.example.laboratorio7.ui.components.LoadingLayout
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LocationDetailsScreen(locationId: Int, onBackClick: () -> Unit) {
-    // Con el ID que llega por navegación se busca la location completa
-    val location = remember(locationId) { LocationDb().getLocationById(locationId) }
+fun LocationDetailsScreen(
+    onBackClick: () -> Unit,
+    viewModel: LocationDetailsViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -50,26 +56,50 @@ fun LocationDetailsScreen(locationId: Int, onBackClick: () -> Unit) {
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = 40.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = location.name,
-                style = MaterialTheme.typography.headlineSmall
+        val contentModifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+
+        val location = uiState.data
+
+        when {
+            uiState.isLoading -> LoadingLayout(
+                onClick = { viewModel.onLoadingClick() },
+                modifier = contentModifier
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            uiState.hasError -> ErrorLayout(
+                message = "Error al obtener la ubicación.",
+                onRetryClick = { viewModel.getLocation() },
+                modifier = contentModifier
+            )
 
-            LocationInfoRow(label = "ID:", value = location.id.toString())
-            Spacer(modifier = Modifier.height(12.dp))
-            LocationInfoRow(label = "Type:", value = location.type)
-            Spacer(modifier = Modifier.height(12.dp))
-            LocationInfoRow(label = "Dimension:", value = location.dimension)
+            location != null -> LocationDetailsContent(
+                location = location,
+                modifier = contentModifier
+            )
         }
+    }
+}
+
+@Composable
+private fun LocationDetailsContent(location: Location, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(horizontal = 40.dp, vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = location.name,
+            style = MaterialTheme.typography.headlineSmall
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        LocationInfoRow(label = "ID:", value = location.id.toString())
+        Spacer(modifier = Modifier.height(12.dp))
+        LocationInfoRow(label = "Type:", value = location.type)
+        Spacer(modifier = Modifier.height(12.dp))
+        LocationInfoRow(label = "Dimension:", value = location.dimension)
     }
 }
 

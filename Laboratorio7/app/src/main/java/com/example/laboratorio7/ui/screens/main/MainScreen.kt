@@ -27,7 +27,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.toRoute
 import com.example.laboratorio7.navigation.CharacterDetailDestination
 import com.example.laboratorio7.navigation.CharactersDestination
 import com.example.laboratorio7.navigation.CharactersGraph
@@ -82,10 +81,9 @@ fun MainScreen(onLogout: () -> Unit) {
                     )
                 }
 
-                composable<CharacterDetailDestination> { backStackEntry ->
-                    val route = backStackEntry.toRoute<CharacterDetailDestination>()
+                // El ID ya no se pasa aquí, el ViewModel lo obtiene con SavedStateHandle
+                composable<CharacterDetailDestination> {
                     CharacterDetailScreen(
-                        characterId = route.characterId,
                         onBackClick = { navController.popBackStack() }
                     )
                 }
@@ -102,10 +100,8 @@ fun MainScreen(onLogout: () -> Unit) {
                     )
                 }
 
-                composable<LocationDetailDestination> { backStackEntry ->
-                    val route = backStackEntry.toRoute<LocationDetailDestination>()
+                composable<LocationDetailDestination> {
                     LocationDetailsScreen(
-                        locationId = route.locationId,
                         onBackClick = { navController.popBackStack() }
                     )
                 }

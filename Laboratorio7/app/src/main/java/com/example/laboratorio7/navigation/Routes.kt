@@ -27,7 +27,7 @@ object LocationsGraph
 @Serializable
 object LocationsDestination
 
-// Solo viaja el ID, la pantalla de detalle busca lo demás en LocationDb
+// Solo viaja el ID; el ViewModel del detalle lo lee con SavedStateHandle
 @Serializable
 data class LocationDetailDestination(val locationId: Int)
 

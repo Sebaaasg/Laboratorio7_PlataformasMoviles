@@ -60,4 +60,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     // Íconos extendidos de Material
     implementation("androidx.compose.material:material-icons-extended")
+
+    // ViewModel en Compose (función viewModel())
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+    // collectAsStateWithLifecycle para observar el StateFlow desde la UI
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
 }

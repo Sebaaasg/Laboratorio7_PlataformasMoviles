@@ -22,21 +22,27 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.example.laboratorio7.data.CharacterDb
+import com.example.laboratorio7.data.Character
+import com.example.laboratorio7.ui.components.ErrorLayout
+import com.example.laboratorio7.ui.components.LoadingLayout
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CharacterDetailScreen(characterId: Int, onBackClick: () -> Unit) {
-    // se obtiene el personaje específico por su ID
-    val character = remember(characterId) { CharacterDb().getCharacterById(characterId) }
+fun CharacterDetailScreen(
+    onBackClick: () -> Unit,
+    viewModel: CharacterDetailViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -57,40 +63,66 @@ fun CharacterDetailScreen(characterId: Int, onBackClick: () -> Unit) {
             )
         }
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(32.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            AsyncImage(
-                model = character.image,
-                contentDescription = "Detalle de ${character.name}",
-                modifier = Modifier
-                    .size(180.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentScale = ContentScale.Crop
+        val contentModifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding)
+
+        // Se guarda en una variable local para que Kotlin sepa que ya no es null
+        val character = uiState.data
+
+        when {
+            uiState.isLoading -> LoadingLayout(
+                onClick = { viewModel.onLoadingClick() },
+                modifier = contentModifier
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Text(
-                text = character.name,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+            uiState.hasError -> ErrorLayout(
+                message = "Error al obtener el personaje.",
+                onRetryClick = { viewModel.getCharacter() },
+                modifier = contentModifier
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Se reutiliza un Composable pequeño para las filas de datos
-            DetailRow(label = "Species:", value = character.species)
-            Spacer(modifier = Modifier.height(12.dp))
-            DetailRow(label = "Status:", value = character.status)
-            Spacer(modifier = Modifier.height(12.dp))
-            DetailRow(label = "Gender:", value = character.gender)
+            character != null -> CharacterDetailContent(
+                character = character,
+                modifier = contentModifier
+            )
         }
+    }
+}
+
+// Es el mismo detalle del lab anterior, solo se movió a su propio Composable
+@Composable
+private fun CharacterDetailContent(character: Character, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        AsyncImage(
+            model = character.image,
+            contentDescription = "Detalle de ${character.name}",
+            modifier = Modifier
+                .size(180.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentScale = ContentScale.Crop
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = character.name,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // Se reutiliza un Composable pequeño para las filas de datos
+        DetailRow(label = "Species:", value = character.species)
+        Spacer(modifier = Modifier.height(12.dp))
+        DetailRow(label = "Status:", value = character.status)
+        Spacer(modifier = Modifier.height(12.dp))
+        DetailRow(label = "Gender:", value = character.gender)
     }
 }
 
