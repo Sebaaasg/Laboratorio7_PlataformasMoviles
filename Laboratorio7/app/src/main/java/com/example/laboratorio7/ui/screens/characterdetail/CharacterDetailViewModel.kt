@@ -22,6 +22,11 @@ data class CharacterDetailUiState(
     val hasError: Boolean = false
 )
 
+sealed interface CharacterDetailIntent {
+    data object LoadingClicked : CharacterDetailIntent
+    data object RetryClicked : CharacterDetailIntent
+}
+
 class CharacterDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
 
     private val characterDb = CharacterDb()
@@ -39,7 +44,14 @@ class CharacterDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel()
         getCharacter()
     }
 
-    fun getCharacter() {
+    fun onIntent(intent: CharacterDetailIntent) {
+        when (intent) {
+            CharacterDetailIntent.LoadingClicked -> showError()
+            CharacterDetailIntent.RetryClicked -> getCharacter()
+        }
+    }
+
+    private fun getCharacter() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, hasError = false) }
@@ -50,7 +62,7 @@ class CharacterDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel()
         }
     }
 
-    fun onLoadingClick() {
+    private fun showError() {
         loadJob?.cancel()
         _uiState.update { it.copy(isLoading = false, hasError = true) }
     }

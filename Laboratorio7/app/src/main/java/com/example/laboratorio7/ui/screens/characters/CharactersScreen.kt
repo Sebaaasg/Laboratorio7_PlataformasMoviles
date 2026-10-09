@@ -62,13 +62,13 @@ fun CharactersScreen(
         // Según el estado se decide qué layout mostrar
         when {
             uiState.isLoading -> LoadingLayout(
-                onClick = { viewModel.onLoadingClick() },
+                onClick = { viewModel.onIntent(CharactersIntent.LoadingClicked) },
                 modifier = contentModifier
             )
 
             uiState.hasError -> ErrorLayout(
                 message = "Error al obtener listado de personajes.",
-                onRetryClick = { viewModel.getCharacters() },
+                onRetryClick = { viewModel.onIntent(CharactersIntent.RetryClicked) },
                 modifier = contentModifier
             )
 

@@ -19,6 +19,13 @@ data class CharactersUiState(
     val hasError: Boolean = false
 )
 
+// Acciones que el usuario puede hacer en esta pantalla
+// Al ser sealed, solo existen estas dos y el when del ViewModel está obligado a manejarlas todas
+sealed interface CharactersIntent {
+    data object LoadingClicked : CharactersIntent
+    data object RetryClicked : CharactersIntent
+}
+
 class CharactersViewModel : ViewModel() {
 
     private val characterDb = CharacterDb()
@@ -34,7 +41,15 @@ class CharactersViewModel : ViewModel() {
         getCharacters()
     }
 
-    fun getCharacters() {
+    // Única función pública: la pantalla manda un Intent y aquí se decide qué hacer
+    fun onIntent(intent: CharactersIntent) {
+        when (intent) {
+            CharactersIntent.LoadingClicked -> showError()
+            CharactersIntent.RetryClicked -> getCharacters()
+        }
+    }
+
+    private fun getCharacters() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, hasError = false) }
@@ -46,7 +61,7 @@ class CharactersViewModel : ViewModel() {
     }
 
     // Si tocan el layout de loading, se corta la carga y se marca el error
-    fun onLoadingClick() {
+    private fun showError() {
         loadJob?.cancel()
         _uiState.update { it.copy(isLoading = false, hasError = true) }
     }

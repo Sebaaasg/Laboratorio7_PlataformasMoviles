@@ -49,13 +49,13 @@ fun LocationsScreen(
 
         when {
             uiState.isLoading -> LoadingLayout(
-                onClick = { viewModel.onLoadingClick() },
+                onClick = { viewModel.onIntent(LocationsIntent.LoadingClicked) },
                 modifier = contentModifier
             )
 
             uiState.hasError -> ErrorLayout(
                 message = "Error al obtener listado de ubicaciones.",
-                onRetryClick = { viewModel.getLocations() },
+                onRetryClick = { viewModel.onIntent(LocationsIntent.RetryClicked) },
                 modifier = contentModifier
             )
 

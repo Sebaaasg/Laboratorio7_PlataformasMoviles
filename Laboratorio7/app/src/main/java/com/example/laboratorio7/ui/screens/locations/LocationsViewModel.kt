@@ -18,6 +18,11 @@ data class LocationsUiState(
     val hasError: Boolean = false
 )
 
+sealed interface LocationsIntent {
+    data object LoadingClicked : LocationsIntent
+    data object RetryClicked : LocationsIntent
+}
+
 // Misma idea que CharactersViewModel, pero con ubicaciones
 class LocationsViewModel : ViewModel() {
 
@@ -32,7 +37,14 @@ class LocationsViewModel : ViewModel() {
         getLocations()
     }
 
-    fun getLocations() {
+    fun onIntent(intent: LocationsIntent) {
+        when (intent) {
+            LocationsIntent.LoadingClicked -> showError()
+            LocationsIntent.RetryClicked -> getLocations()
+        }
+    }
+
+    private fun getLocations() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, hasError = false) }
@@ -43,7 +55,7 @@ class LocationsViewModel : ViewModel() {
         }
     }
 
-    fun onLoadingClick() {
+    private fun showError() {
         loadJob?.cancel()
         _uiState.update { it.copy(isLoading = false, hasError = true) }
     }

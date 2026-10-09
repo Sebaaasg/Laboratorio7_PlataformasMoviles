@@ -64,13 +64,13 @@ fun LocationDetailsScreen(
 
         when {
             uiState.isLoading -> LoadingLayout(
-                onClick = { viewModel.onLoadingClick() },
+                onClick = { viewModel.onIntent(LocationDetailsIntent.LoadingClicked) },
                 modifier = contentModifier
             )
 
             uiState.hasError -> ErrorLayout(
                 message = "Error al obtener la ubicación.",
-                onRetryClick = { viewModel.getLocation() },
+                onRetryClick = { viewModel.onIntent(LocationDetailsIntent.RetryClicked) },
                 modifier = contentModifier
             )
 

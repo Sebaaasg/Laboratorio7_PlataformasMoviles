@@ -21,6 +21,11 @@ data class LocationDetailsUiState(
     val hasError: Boolean = false
 )
 
+sealed interface LocationDetailsIntent {
+    data object LoadingClicked : LocationDetailsIntent
+    data object RetryClicked : LocationDetailsIntent
+}
+
 class LocationDetailsViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
 
     private val locationDb = LocationDb()
@@ -37,7 +42,14 @@ class LocationDetailsViewModel(savedStateHandle: SavedStateHandle) : ViewModel()
         getLocation()
     }
 
-    fun getLocation() {
+    fun onIntent(intent: LocationDetailsIntent) {
+        when (intent) {
+            LocationDetailsIntent.LoadingClicked -> showError()
+            LocationDetailsIntent.RetryClicked -> getLocation()
+        }
+    }
+
+    private fun getLocation() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, hasError = false) }
@@ -48,7 +60,7 @@ class LocationDetailsViewModel(savedStateHandle: SavedStateHandle) : ViewModel()
         }
     }
 
-    fun onLoadingClick() {
+    private fun showError() {
         loadJob?.cancel()
         _uiState.update { it.copy(isLoading = false, hasError = true) }
     }

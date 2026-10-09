@@ -35,6 +35,7 @@ import coil.compose.AsyncImage
 import com.example.laboratorio7.data.Character
 import com.example.laboratorio7.ui.components.ErrorLayout
 import com.example.laboratorio7.ui.components.LoadingLayout
+import com.example.laboratorio7.ui.screens.characters.CharactersIntent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,13 +73,13 @@ fun CharacterDetailScreen(
 
         when {
             uiState.isLoading -> LoadingLayout(
-                onClick = { viewModel.onLoadingClick() },
+                onClick = { viewModel.onIntent(CharacterDetailIntent.LoadingClicked)},
                 modifier = contentModifier
             )
 
             uiState.hasError -> ErrorLayout(
                 message = "Error al obtener el personaje.",
-                onRetryClick = { viewModel.getCharacter() },
+                onRetryClick = { viewModel.onIntent(CharacterDetailIntent.RetryClicked) },
                 modifier = contentModifier
             )
 
