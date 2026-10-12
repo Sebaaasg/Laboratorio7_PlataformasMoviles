@@ -52,17 +52,25 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
     // Navegación en Compose
     implementation("androidx.navigation:navigation-compose:2.10.1")
+
     // Serialización de Kotlin
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+
     // Coil para cargar imágenes desde internet
     implementation("io.coil-kt:coil-compose:2.7.0")
+
     // Íconos extendidos de Material
     implementation("androidx.compose.material:material-icons-extended")
 
     // ViewModel en Compose (función viewModel())
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.11.0")
+
     // collectAsStateWithLifecycle para observar el StateFlow desde la UI
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.11.0")
+
+    // DataStore Preferences para guardar el nombre del usuario
+    implementation("androidx.datastore:datastore-preferences:1.2.1")
 }

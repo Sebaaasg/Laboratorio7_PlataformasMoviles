@@ -3,6 +3,10 @@ package com.example.laboratorio7.navigation
 import kotlinx.serialization.Serializable
 
 // ---------- Grafo raíz ----------
+
+@Serializable
+object SplashDestination
+
 @Serializable
 object LoginDestination
 

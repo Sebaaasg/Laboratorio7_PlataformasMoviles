@@ -17,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,10 +26,24 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.laboratorio7.R
 
 @Composable
-fun ProfileScreen(onLogoutClick: () -> Unit) {
+fun ProfileScreen(
+    onLogout: () -> Unit,
+    viewModel: ProfileViewModel = viewModel()
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Cuando el nombre ya se borró de DataStore, MainActivity se encarga de movernos al Login
+    LaunchedEffect(uiState.isLoggedOut) {
+        if (uiState.isLoggedOut) {
+            onLogout()
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -35,8 +51,8 @@ fun ProfileScreen(onLogoutClick: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Foto de perfil guardada en res/drawable.
-        // clip(CircleShape) la recorta en círculo y Crop la escala para llenarlo sin deformarse
+        // Foto de perfil guardada en res/drawable
+        // clip(CircleShape) la recorta en círculo y Crop la escala para que no se deforme
         Image(
             painter = painterResource(id = R.drawable.profile_photo),
             contentDescription = "Foto de perfil",
@@ -49,14 +65,14 @@ fun ProfileScreen(onLogoutClick: () -> Unit) {
 
         Spacer(modifier = Modifier.height(48.dp))
 
-        ProfileInfoRow(label = "Nombre:", value = "Estuardo Sebastian García de León")
+        // El nombre ahora es el que el usuario escribió en el Login
+        ProfileInfoRow(label = "Nombre:", value = uiState.name)
         Spacer(modifier = Modifier.height(12.dp))
         ProfileInfoRow(label = "Carné:", value = "25057")
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        // La lógica de cerrar sesión la maneja MainActivity, aquí solo se avisa del click
-        OutlinedButton(onClick = onLogoutClick) {
+        OutlinedButton(onClick = { viewModel.onIntent(ProfileIntent.LogoutClicked) }) {
             Text("Cerrar sesión")
         }
     }
@@ -67,7 +83,7 @@ private fun ProfileInfoRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth()) {
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
         Spacer(modifier = Modifier.width(16.dp))
-        // weight + TextAlign.End para que el nombre (que es largo) quede a la derecha
+        // weight + TextAlign.End para que el nombre quede a la derecha
         // y si no cabe baje de línea sin encimarse con la etiqueta
         Text(
             text = value,

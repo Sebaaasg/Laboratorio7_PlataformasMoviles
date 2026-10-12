@@ -109,7 +109,7 @@ fun MainScreen(onLogout: () -> Unit) {
 
             // Profile es una sola pantalla, no necesita nested graph
             composable<ProfileDestination> {
-                ProfileScreen(onLogoutClick = onLogout)
+                ProfileScreen(onLogout = onLogout)
             }
         }
     }
