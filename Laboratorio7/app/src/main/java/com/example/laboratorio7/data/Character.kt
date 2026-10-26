@@ -6,5 +6,7 @@ data class Character(
     val status: String,
     val species: String,
     val gender: String,
-    val image: String
+    val image: String,
+    // Tiene valor por defecto para que CharacterDb no tenga que cambiar
+    val isFavorite: Boolean = false
 )

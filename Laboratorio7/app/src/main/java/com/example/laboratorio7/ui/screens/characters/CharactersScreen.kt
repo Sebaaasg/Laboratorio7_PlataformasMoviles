@@ -13,8 +13,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,7 +38,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.laboratorio7.data.Character
+import com.example.laboratorio7.ui.components.EmptyLayout
 import com.example.laboratorio7.ui.components.ErrorLayout
+import com.example.laboratorio7.ui.components.FavoriteButton
 import com.example.laboratorio7.ui.components.LoadingLayout
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +56,22 @@ fun CharactersScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Characters") },
+                actions = {
+                    // Filtro: al activarlo solo se muestran los personajes marcados como favoritos
+                    FilterChip(
+                        selected = uiState.showOnlyFavorites,
+                        onClick = { viewModel.onIntent(CharactersIntent.FavoritesFilterClicked) },
+                        label = { Text("Favoritos") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = if (uiState.showOnlyFavorites) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                contentDescription = null,
+                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                            )
+                        },
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -72,9 +96,19 @@ fun CharactersScreen(
                 modifier = contentModifier
             )
 
+            // Pasa por ejemplo cuando el filtro está activo y no hay ningún favorito
+            uiState.visibleCharacters.isEmpty() -> EmptyLayout(
+                message = "No hay elementos a mostrar",
+                modifier = contentModifier
+            )
+
             else -> LazyColumn(modifier = contentModifier) {
-                items(uiState.data) { character ->
-                    CharacterListItem(character = character, onClick = { onCharacterClick(character.id) })
+                items(uiState.visibleCharacters) { character ->
+                    CharacterListItem(
+                        character = character,
+                        onClick = { onCharacterClick(character.id) },
+                        onFavoriteClick = { viewModel.onIntent(CharactersIntent.FavoriteClicked(character)) }
+                    )
                     HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
                 }
             }
@@ -83,7 +117,11 @@ fun CharactersScreen(
 }
 
 @Composable
-private fun CharacterListItem(character: Character, onClick: () -> Unit) {
+private fun CharacterListItem(
+    character: Character,
+    onClick: () -> Unit,
+    onFavoriteClick: () -> Unit
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -104,7 +142,8 @@ private fun CharacterListItem(character: Character, onClick: () -> Unit) {
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        Column {
+        // weight(1f) hace que el texto ocupe el espacio libre y el corazón quede a la derecha
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = character.name,
                 style = MaterialTheme.typography.titleMedium,
@@ -116,5 +155,7 @@ private fun CharacterListItem(character: Character, onClick: () -> Unit) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+
+        FavoriteButton(isFavorite = character.isFavorite, onClick = onFavoriteClick)
     }
 }

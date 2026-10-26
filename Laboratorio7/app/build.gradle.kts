@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     kotlin("plugin.serialization") version "2.0.0"
+    // KSP genera el código de Room a partir de las anotaciones
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -73,4 +75,8 @@ dependencies {
 
     // DataStore Preferences para guardar el nombre del usuario
     implementation("androidx.datastore:datastore-preferences:1.2.1")
+
+    // Room para guardar personajes y locations en una base de datos local
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
 }

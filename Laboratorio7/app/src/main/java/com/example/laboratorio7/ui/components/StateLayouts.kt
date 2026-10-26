@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ErrorOutline
+import androidx.compose.material.icons.outlined.Inbox
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -22,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 // Layout que se muestra mientras se "obtiene" la información.
-// Todo el layout es clickeable porque al tocarlo se simula un error
+// el layout es clickeable porque al tocarlo se simula un error
 @Composable
 fun LoadingLayout(onClick: () -> Unit, modifier: Modifier = Modifier) {
     Column(
@@ -69,5 +70,30 @@ fun ErrorLayout(message: String, onRetryClick: () -> Unit, modifier: Modifier = 
         ) {
             Text("Reintentar")
         }
+    }
+}
+
+// Layout para cuando la lista está vacía
+@Composable
+fun EmptyLayout(message: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(horizontal = 32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = Icons.Outlined.Inbox,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(56.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = message,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
     }
 }

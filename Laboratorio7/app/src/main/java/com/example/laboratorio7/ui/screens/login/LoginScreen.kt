@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -72,6 +74,8 @@ fun LoginScreen(
                     label = { Text("Nombre") },
                     singleLine = true,
                     isError = uiState.hasError,
+                    // No se puede editar el nombre mientras se sincroniza
+                    enabled = !uiState.isSyncing,
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -90,11 +94,29 @@ fun LoginScreen(
 
                 Button(
                     onClick = { viewModel.onIntent(LoginIntent.LoginClicked) },
+                    // Deshabilitado durante la sincronización para que no se presione dos veces
+                    enabled = !uiState.isSyncing,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp)
                 ) {
-                    Text("Iniciar sesión")
+                    if (uiState.isSyncing) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text("Iniciar sesión")
+                    }
+                }
+
+                if (uiState.isSyncing) {
+                    Text(
+                        text = "Sincronizando datos...",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
                 }
             }
 

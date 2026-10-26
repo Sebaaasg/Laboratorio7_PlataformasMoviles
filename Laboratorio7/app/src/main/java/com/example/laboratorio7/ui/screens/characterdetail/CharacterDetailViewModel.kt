@@ -1,11 +1,13 @@
 package com.example.laboratorio7.ui.screens.characterdetail
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.example.laboratorio7.RickAndMortyApp
 import com.example.laboratorio7.data.Character
-import com.example.laboratorio7.data.CharacterDb
+import com.example.laboratorio7.data.local.toModel
 import com.example.laboratorio7.navigation.CharacterDetailDestination
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -25,11 +27,15 @@ data class CharacterDetailUiState(
 sealed interface CharacterDetailIntent {
     data object LoadingClicked : CharacterDetailIntent
     data object RetryClicked : CharacterDetailIntent
+    data object FavoriteClicked : CharacterDetailIntent
 }
 
-class CharacterDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
+class CharacterDetailViewModel(
+    application: Application,
+    savedStateHandle: SavedStateHandle
+) : AndroidViewModel(application) {
 
-    private val characterDb = CharacterDb()
+    private val characterDao = (application as RickAndMortyApp).database.characterDao()
 
     // Navigation guarda los argumentos de la ruta en el SavedStateHandle,
     // así que el ID se lee de ahí y la pantalla ya no tiene que recibirlo
@@ -48,6 +54,7 @@ class CharacterDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel()
         when (intent) {
             CharacterDetailIntent.LoadingClicked -> showError()
             CharacterDetailIntent.RetryClicked -> getCharacter()
+            CharacterDetailIntent.FavoriteClicked -> toggleFavorite()
         }
     }
 
@@ -56,9 +63,19 @@ class CharacterDetailViewModel(savedStateHandle: SavedStateHandle) : ViewModel()
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, hasError = false) }
             delay(2000)
-            _uiState.update {
-                it.copy(isLoading = false, data = characterDb.getCharacterById(characterId))
+
+            // Se queda escuchando ese personaje en Room, así el corazón cambia apenas se actualiza
+            characterDao.getCharacterById(characterId).collect { entity ->
+                _uiState.update { it.copy(isLoading = false, data = entity?.toModel()) }
             }
+        }
+    }
+
+    private fun toggleFavorite() {
+        // Si el personaje todavía no ha cargado no hay nada que actualizar
+        val character = _uiState.value.data ?: return
+        viewModelScope.launch {
+            characterDao.updateFavorite(character.id, !character.isFavorite)
         }
     }
 

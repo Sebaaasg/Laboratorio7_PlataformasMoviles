@@ -1,11 +1,13 @@
 package com.example.laboratorio7.ui.screens.locationdetails
 
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.example.laboratorio7.RickAndMortyApp
 import com.example.laboratorio7.data.Location
-import com.example.laboratorio7.data.LocationDb
+import com.example.laboratorio7.data.local.toModel
 import com.example.laboratorio7.navigation.LocationDetailDestination
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -26,9 +28,12 @@ sealed interface LocationDetailsIntent {
     data object RetryClicked : LocationDetailsIntent
 }
 
-class LocationDetailsViewModel(savedStateHandle: SavedStateHandle) : ViewModel() {
+class LocationDetailsViewModel(
+    application: Application,
+    savedStateHandle: SavedStateHandle
+) : AndroidViewModel(application) {
 
-    private val locationDb = LocationDb()
+    private val locationDao = (application as RickAndMortyApp).database.locationDao()
 
     // Igual que en el detalle de personajes, el ID sale del SavedStateHandle
     private val locationId = savedStateHandle.toRoute<LocationDetailDestination>().locationId
@@ -54,8 +59,9 @@ class LocationDetailsViewModel(savedStateHandle: SavedStateHandle) : ViewModel()
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, hasError = false) }
             delay(2000)
-            _uiState.update {
-                it.copy(isLoading = false, data = locationDb.getLocationById(locationId))
+
+            locationDao.getLocationById(locationId).collect { entity ->
+                _uiState.update { it.copy(isLoading = false, data = entity?.toModel()) }
             }
         }
     }

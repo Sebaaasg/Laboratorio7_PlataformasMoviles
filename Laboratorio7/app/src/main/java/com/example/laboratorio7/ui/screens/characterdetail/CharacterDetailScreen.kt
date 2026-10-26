@@ -34,8 +34,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.laboratorio7.data.Character
 import com.example.laboratorio7.ui.components.ErrorLayout
+import com.example.laboratorio7.ui.components.FavoriteButton
 import com.example.laboratorio7.ui.components.LoadingLayout
-import com.example.laboratorio7.ui.screens.characters.CharactersIntent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,6 +44,9 @@ fun CharacterDetailScreen(
     viewModel: CharacterDetailViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    // Se guarda en una variable local para que Kotlin sepa que ya no es null
+    val character = uiState.data
 
     Scaffold(
         topBar = {
@@ -57,6 +60,15 @@ fun CharacterDetailScreen(
                         )
                     }
                 },
+                actions = {
+                    // El corazón solo aparece cuando ya se cargó el personaje
+                    if (character != null) {
+                        FavoriteButton(
+                            isFavorite = character.isFavorite,
+                            onClick = { viewModel.onIntent(CharacterDetailIntent.FavoriteClicked) }
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -67,9 +79,6 @@ fun CharacterDetailScreen(
         val contentModifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
-
-        // Se guarda en una variable local para que Kotlin sepa que ya no es null
-        val character = uiState.data
 
         when {
             uiState.isLoading -> LoadingLayout(

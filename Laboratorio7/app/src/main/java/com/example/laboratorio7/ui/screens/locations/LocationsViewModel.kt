@@ -1,9 +1,11 @@
 package com.example.laboratorio7.ui.screens.locations
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.laboratorio7.RickAndMortyApp
 import com.example.laboratorio7.data.Location
-import com.example.laboratorio7.data.LocationDb
+import com.example.laboratorio7.data.local.toModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,9 +26,9 @@ sealed interface LocationsIntent {
 }
 
 // Misma idea que CharactersViewModel, pero con ubicaciones
-class LocationsViewModel : ViewModel() {
+class LocationsViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val locationDb = LocationDb()
+    private val locationDao = (application as RickAndMortyApp).database.locationDao()
 
     private val _uiState = MutableStateFlow(LocationsUiState())
     val uiState: StateFlow<LocationsUiState> = _uiState.asStateFlow()
@@ -49,8 +51,12 @@ class LocationsViewModel : ViewModel() {
         loadJob = viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, hasError = false) }
             delay(4000)
-            _uiState.update {
-                it.copy(isLoading = false, data = locationDb.getAllLocations())
+
+            // Ahora se lee de Room y no de LocationDb
+            locationDao.getAllLocations().collect { entities ->
+                _uiState.update { state ->
+                    state.copy(isLoading = false, data = entities.map { it.toModel() })
+                }
             }
         }
     }
