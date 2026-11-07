@@ -1,6 +1,5 @@
 package com.example.laboratorio7.ui.screens.characterdetail
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,30 +8,31 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil.compose.AsyncImage
 import com.example.laboratorio7.data.Character
+import com.example.laboratorio7.ui.components.CharacterImage
 import com.example.laboratorio7.ui.components.ErrorLayout
 import com.example.laboratorio7.ui.components.FavoriteButton
 import com.example.laboratorio7.ui.components.LoadingLayout
@@ -41,12 +41,20 @@ import com.example.laboratorio7.ui.components.LoadingLayout
 @Composable
 fun CharacterDetailScreen(
     onBackClick: () -> Unit,
+    onEditClick: (Int) -> Unit,
     viewModel: CharacterDetailViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     // Se guarda en una variable local para que Kotlin sepa que ya no es null
     val character = uiState.data
+
+    // Después de borrar el personaje ya no hay nada que mostrar, se regresa a la lista
+    LaunchedEffect(uiState.isDeleted) {
+        if (uiState.isDeleted) {
+            onBackClick()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -61,12 +69,18 @@ fun CharacterDetailScreen(
                     }
                 },
                 actions = {
-                    // El corazón solo aparece cuando ya se cargó el personaje
+                    // Las acciones solo aparecen cuando ya se cargó el personaje
                     if (character != null) {
                         FavoriteButton(
                             isFavorite = character.isFavorite,
                             onClick = { viewModel.onIntent(CharacterDetailIntent.FavoriteClicked) }
                         )
+                        IconButton(onClick = { onEditClick(character.id) }) {
+                            Icon(imageVector = Icons.Filled.Edit, contentDescription = "Editar")
+                        }
+                        IconButton(onClick = { viewModel.onIntent(CharacterDetailIntent.DeleteClicked) }) {
+                            Icon(imageVector = Icons.Filled.Delete, contentDescription = "Eliminar")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -98,24 +112,34 @@ fun CharacterDetailScreen(
             )
         }
     }
+
+    // Se pide confirmación antes de borrar porque no se puede deshacer
+    if (uiState.showDeleteDialog && character != null) {
+        AlertDialog(
+            onDismissRequest = { viewModel.onIntent(CharacterDetailIntent.DeleteDismissed) },
+            title = { Text("Eliminar personaje") },
+            text = { Text("¿Seguro que quieres eliminar a ${character.name}?") },
+            confirmButton = {
+                TextButton(onClick = { viewModel.onIntent(CharacterDetailIntent.DeleteConfirmed) }) {
+                    Text("Eliminar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onIntent(CharacterDetailIntent.DeleteDismissed) }) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 }
 
-// Es el mismo detalle del lab anterior, solo se movió a su propio Composable
 @Composable
 private fun CharacterDetailContent(character: Character, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        AsyncImage(
-            model = character.image,
-            contentDescription = "Detalle de ${character.name}",
-            modifier = Modifier
-                .size(180.dp)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentScale = ContentScale.Crop
-        )
+        CharacterImage(image = character.image, name = character.name, size = 180.dp)
 
         Spacer(modifier = Modifier.height(24.dp))
 

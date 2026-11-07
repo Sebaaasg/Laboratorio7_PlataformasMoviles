@@ -27,6 +27,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.laboratorio7.data.Location
 import com.example.laboratorio7.ui.components.ErrorLayout
+import com.example.laboratorio7.ui.components.FavoriteButton
 import com.example.laboratorio7.ui.components.LoadingLayout
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -36,6 +37,8 @@ fun LocationDetailsScreen(
     viewModel: LocationDetailsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+
+    val location = uiState.data
 
     Scaffold(
         topBar = {
@@ -49,6 +52,15 @@ fun LocationDetailsScreen(
                         )
                     }
                 },
+                actions = {
+                    // Mismo corazón que en la lista, así el detalle muestra si es favorita
+                    if (location != null) {
+                        FavoriteButton(
+                            isFavorite = location.isFavorite,
+                            onClick = { viewModel.onIntent(LocationDetailsIntent.FavoriteClicked) }
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -59,8 +71,6 @@ fun LocationDetailsScreen(
         val contentModifier = Modifier
             .fillMaxSize()
             .padding(innerPadding)
-
-        val location = uiState.data
 
         when {
             uiState.isLoading -> LoadingLayout(

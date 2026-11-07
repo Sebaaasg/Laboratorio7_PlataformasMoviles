@@ -6,8 +6,9 @@ import androidx.room3.PrimaryKey
 // Cada objeto es una fila de la tabla characters
 @Entity(tableName = "characters")
 data class CharacterEntity(
-    // No es autogenerado porque el id ya viene de CharacterDb
-    @PrimaryKey
+    // Los del API ya traen su id. Para los que crea el usuario se manda 0
+    // y Room les asigna el siguiente disponible
+    @PrimaryKey(autoGenerate = true)
     val id: Int,
     val name: String,
     val status: String,

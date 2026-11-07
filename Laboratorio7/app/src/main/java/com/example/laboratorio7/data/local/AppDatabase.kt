@@ -4,12 +4,13 @@ import androidx.room3.Database
 import androidx.room3.RoomDatabase
 
 // Base de datos con las dos tablas. Room genera la implementación con KSP
+// Versión 2 porque en este lab se agregó isFavorite a locations
 @Database(
     entities = [
         CharacterEntity::class,
         LocationEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

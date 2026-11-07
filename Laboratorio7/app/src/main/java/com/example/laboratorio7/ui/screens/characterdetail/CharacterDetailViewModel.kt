@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.example.laboratorio7.RickAndMortyApp
 import com.example.laboratorio7.data.Character
-import com.example.laboratorio7.data.local.toModel
 import com.example.laboratorio7.navigation.CharacterDetailDestination
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -21,13 +20,19 @@ import kotlinx.coroutines.launch
 data class CharacterDetailUiState(
     val isLoading: Boolean = true,
     val data: Character? = null,
-    val hasError: Boolean = false
+    val hasError: Boolean = false,
+    val showDeleteDialog: Boolean = false,
+    // Cuando pasa a true la pantalla regresa a la lista
+    val isDeleted: Boolean = false
 )
 
 sealed interface CharacterDetailIntent {
     data object LoadingClicked : CharacterDetailIntent
     data object RetryClicked : CharacterDetailIntent
     data object FavoriteClicked : CharacterDetailIntent
+    data object DeleteClicked : CharacterDetailIntent
+    data object DeleteConfirmed : CharacterDetailIntent
+    data object DeleteDismissed : CharacterDetailIntent
 }
 
 class CharacterDetailViewModel(
@@ -35,7 +40,7 @@ class CharacterDetailViewModel(
     savedStateHandle: SavedStateHandle
 ) : AndroidViewModel(application) {
 
-    private val characterDao = (application as RickAndMortyApp).database.characterDao()
+    private val characterRepository = (application as RickAndMortyApp).characterRepository
 
     // Navigation guarda los argumentos de la ruta en el SavedStateHandle,
     // así que el ID se lee de ahí y la pantalla ya no tiene que recibirlo
@@ -55,6 +60,9 @@ class CharacterDetailViewModel(
             CharacterDetailIntent.LoadingClicked -> showError()
             CharacterDetailIntent.RetryClicked -> getCharacter()
             CharacterDetailIntent.FavoriteClicked -> toggleFavorite()
+            CharacterDetailIntent.DeleteClicked -> _uiState.update { it.copy(showDeleteDialog = true) }
+            CharacterDetailIntent.DeleteDismissed -> _uiState.update { it.copy(showDeleteDialog = false) }
+            CharacterDetailIntent.DeleteConfirmed -> deleteCharacter()
         }
     }
 
@@ -64,9 +72,10 @@ class CharacterDetailViewModel(
             _uiState.update { it.copy(isLoading = true, hasError = false) }
             delay(2000)
 
-            // Se queda escuchando ese personaje en Room, así el corazón cambia apenas se actualiza
-            characterDao.getCharacterById(characterId).collect { entity ->
-                _uiState.update { it.copy(isLoading = false, data = entity?.toModel()) }
+            // Se queda escuchando ese personaje en Room. Si se edita o cambia el favorito,
+            // el detalle se actualiza solo sin volver a pedir nada
+            characterRepository.getCharacterById(characterId).collect { character ->
+                _uiState.update { it.copy(isLoading = false, data = character) }
             }
         }
     }
@@ -75,7 +84,15 @@ class CharacterDetailViewModel(
         // Si el personaje todavía no ha cargado no hay nada que actualizar
         val character = _uiState.value.data ?: return
         viewModelScope.launch {
-            characterDao.updateFavorite(character.id, !character.isFavorite)
+            characterRepository.updateCharacter(character.copy(isFavorite = !character.isFavorite))
+        }
+    }
+
+    private fun deleteCharacter() {
+        val character = _uiState.value.data ?: return
+        viewModelScope.launch {
+            characterRepository.deleteCharacter(character)
+            _uiState.update { it.copy(showDeleteDialog = false, isDeleted = true) }
         }
     }
 

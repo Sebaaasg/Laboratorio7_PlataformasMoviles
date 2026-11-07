@@ -79,4 +79,7 @@ dependencies {
     // Room para guardar personajes y locations en una base de datos local
     implementation(libs.androidx.room.runtime)
     ksp(libs.androidx.room.compiler)
+
+    // Ktor para hacer las llamadas al API de Rick & Morty
+    implementation(libs.bundles.ktor)
 }

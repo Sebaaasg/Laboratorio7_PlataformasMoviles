@@ -6,7 +6,7 @@ data class Character(
     val status: String,
     val species: String,
     val gender: String,
+    // Vacía en los personajes que crea el usuario, la UI muestra un ícono en su lugar
     val image: String,
-    // Tiene valor por defecto para que CharacterDb no tenga que cambiar
     val isFavorite: Boolean = false
 )

@@ -28,6 +28,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.example.laboratorio7.navigation.CharacterDetailDestination
+import com.example.laboratorio7.navigation.CharacterFormDestination
 import com.example.laboratorio7.navigation.CharactersDestination
 import com.example.laboratorio7.navigation.CharactersGraph
 import com.example.laboratorio7.navigation.LocationDetailDestination
@@ -35,6 +36,7 @@ import com.example.laboratorio7.navigation.LocationsDestination
 import com.example.laboratorio7.navigation.LocationsGraph
 import com.example.laboratorio7.navigation.ProfileDestination
 import com.example.laboratorio7.ui.screens.characterdetail.CharacterDetailScreen
+import com.example.laboratorio7.ui.screens.characterform.CharacterFormScreen
 import com.example.laboratorio7.ui.screens.characters.CharactersScreen
 import com.example.laboratorio7.ui.screens.locationdetails.LocationDetailsScreen
 import com.example.laboratorio7.ui.screens.locations.LocationsScreen
@@ -71,12 +73,16 @@ fun MainScreen(onLogout: () -> Unit) {
                 .consumeWindowInsets(innerPadding)
         ) {
 
-            // Nested graph de Characters: lista y detalle del Lab 7
+            // Nested graph de Characters: lista, detalle y formulario para crear/editar
             navigation<CharactersGraph>(startDestination = CharactersDestination) {
                 composable<CharactersDestination> {
                     CharactersScreen(
                         onCharacterClick = { id ->
                             navController.navigate(CharacterDetailDestination(characterId = id))
+                        },
+                        // Sin id, el formulario sabe que es un personaje nuevo
+                        onAddClick = {
+                            navController.navigate(CharacterFormDestination())
                         }
                     )
                 }
@@ -84,6 +90,15 @@ fun MainScreen(onLogout: () -> Unit) {
                 // El ID ya no se pasa aquí, el ViewModel lo obtiene con SavedStateHandle
                 composable<CharacterDetailDestination> {
                     CharacterDetailScreen(
+                        onBackClick = { navController.popBackStack() },
+                        onEditClick = { id ->
+                            navController.navigate(CharacterFormDestination(characterId = id))
+                        }
+                    )
+                }
+
+                composable<CharacterFormDestination> {
+                    CharacterFormScreen(
                         onBackClick = { navController.popBackStack() }
                     )
                 }

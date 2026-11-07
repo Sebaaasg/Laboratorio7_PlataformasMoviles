@@ -5,7 +5,6 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.laboratorio7.RickAndMortyApp
 import com.example.laboratorio7.data.Character
-import com.example.laboratorio7.data.local.toModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,10 +34,10 @@ sealed interface CharactersIntent {
     data object FavoritesFilterClicked : CharactersIntent
 }
 
-// Ahora es AndroidViewModel porque necesita la Application para llegar a la base de datos
 class CharactersViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val characterDao = (application as RickAndMortyApp).database.characterDao()
+    // Ya no se usa el DAO directo, todo pasa por el repositorio
+    private val characterRepository = (application as RickAndMortyApp).characterRepository
 
     // El MutableStateFlow solo se modifica aquí, la UI recibe la versión de solo lectura
     private val _uiState = MutableStateFlow(CharactersUiState())
@@ -69,19 +68,18 @@ class CharactersViewModel(application: Application) : AndroidViewModel(applicati
             _uiState.update { it.copy(isLoading = true, hasError = false) }
             delay(4000) // simula la espera de una llamada a internet
 
-            // Los datos ahora salen de Room. Como es un Flow, cada vez que cambia la tabla llega la lista nueva y la pantalla se actualiza
-            characterDao.getAllCharacters().collect { entities ->
-                _uiState.update { state ->
-                    state.copy(isLoading = false, data = entities.map { it.toModel() })
-                }
+            // Como es un Flow de Room, cada vez que se crea, edita o borra un personaje
+            // llega la lista nueva y la pantalla se actualiza sola
+            characterRepository.getCharacters().collect { characters ->
+                _uiState.update { it.copy(isLoading = false, data = characters) }
             }
         }
     }
 
-    // Solo se actualiza el registro en Room, el collect de arriba se encarga de refrescar la lista
+    // Se guarda el mismo personaje con el favorito invertido, el collect de arriba refresca la lista
     private fun toggleFavorite(character: Character) {
         viewModelScope.launch {
-            characterDao.updateFavorite(character.id, !character.isFavorite)
+            characterRepository.updateCharacter(character.copy(isFavorite = !character.isFavorite))
         }
     }
 

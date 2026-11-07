@@ -24,9 +24,9 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     private val userPreferences = UserPreferences(application)
 
-    private val database = (application as RickAndMortyApp).database
-    private val characterDao = database.characterDao()
-    private val locationDao = database.locationDao()
+    private val app = application as RickAndMortyApp
+    private val characterRepository = app.characterRepository
+    private val locationRepository = app.locationRepository
 
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -48,11 +48,11 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     private fun logout() {
         viewModelScope.launch {
-            // Se borra el nombre, luego todos los registros de las dos tablas
-            // y hasta después se manda a navegar al Login
+            // Se borra el nombre y todo lo de Room: personajes creados o editados,
+            // favoritos de personajes y de locations. El próximo login empieza desde cero
             userPreferences.clearUserName()
-            characterDao.deleteAllCharacters()
-            locationDao.deleteAllLocations()
+            characterRepository.deleteAll()
+            locationRepository.deleteAll()
             _uiState.update { it.copy(isLoggedOut = true) }
         }
     }

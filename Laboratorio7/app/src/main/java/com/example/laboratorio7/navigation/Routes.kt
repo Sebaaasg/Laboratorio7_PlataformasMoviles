@@ -24,6 +24,10 @@ object CharactersDestination
 @Serializable
 data class CharacterDetailDestination(val characterId: Int)
 
+// La misma pantalla sirve para crear y editar: si characterId es null, se está creando
+@Serializable
+data class CharacterFormDestination(val characterId: Int? = null)
+
 // ---------- Nested graph de Locations ----------
 @Serializable
 object LocationsGraph

@@ -9,5 +9,7 @@ data class LocationEntity(
     val id: Int,
     val name: String,
     val type: String,
-    val dimension: String
+    val dimension: String,
+    // Es lo único que el usuario puede cambiar de una location
+    val isFavorite: Boolean = false
 )
